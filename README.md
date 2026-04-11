@@ -16,10 +16,4 @@ Rooms on the floor plan are real contributions. Each room is a folder in this re
 
 ## The vibe
 
-This project is built with AI assistance — Claude Code is recommended, but any AI tool works. You don't need to be a developer. You need an idea, an image, and a willingness to figure it out.
-
-## Building codes
-
-- Every image in the room, including background images: JPEG or WebP, max 200KB
-- Total room folder: max 5MB
-- One room per builder. Exceptions by request.
+We recommend contributing to this project with AI assistance — Claude Code is recommended, but any AI tool works. You don't need to be a developer. You need an idea, an image, and a willingness to figure it out.
