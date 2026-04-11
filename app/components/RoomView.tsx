@@ -1,116 +1,379 @@
 "use client";
 import { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import DiagramModal from './DiagramModal';
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 
-export default function RoomView({ room: initialRoom, onBack }: any) {
-  const [room, setRoom] = useState(initialRoom);
-  const [objects, setObjects] = useState<any[]>([]);
-  const [selectedType, setSelectedType] = useState('📦');
+interface Hotspot {
+  id: string;
+  label: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  action: 'open_modal' | 'open_image' | 'open_url' | 'navigate_floor';
+  modal?: string;
+  image_url?: string;
+  url?: string;
+}
+
+interface RoomLink {
+  label: string;
+  url: string;
+}
+
+interface RoomConfig {
+  room_display_name: string;
+  owner: string;
+  background_image: string;
+  hotspots: Hotspot[];
+  links?: RoomLink[];
+  hide_back_button?: boolean;
+  title?: string;
+}
+
+interface RegistryEntry {
+  id: string;
+  name: string;
+  github_username: string;
+  registry_id: string;
+  status: string;
+}
+
+export default function RoomView({ onBack, registryId, room }: {
+  onBack: () => void;
+  registryId: string;
+  room?: any;
+}) {
+  const [config, setConfig] = useState<RoomConfig | null>(null);
+  const [configError, setConfigError] = useState(false);
+  const [activeModal, setActiveModal] = useState<string | null>(null);
+  const [activeImage, setActiveImage] = useState<{ url: string; label: string } | null>(null);
+  const [hoveredHotspot, setHoveredHotspot] = useState<string | null>(null);
+  const [registryEntries, setRegistryEntries] = useState<RegistryEntry[]>([]);
+  const [registryLoading, setRegistryLoading] = useState(false);
+  const [showRoomInfo, setShowRoomInfo] = useState(false);
 
   useEffect(() => {
-    const fetchRoomData = async () => {
-      const { data } = await supabase.from('room_objects').select('*').eq('room_id', room.id);
-      setObjects(data || []);
-    };
-    fetchRoomData();
-
-    // Simplify the channel to ensure it catches all relevant changes
-    const channel = supabase.channel(`room-${room.id}`)
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'room_objects'
-      }, (payload) => {
-        // Only add if it belongs to this room and isn't already in state
-        if (payload.new.room_id === room.id) {
-          setObjects(prev => {
-            if (prev.some(obj => obj.id === payload.new.id)) return prev;
-            return [...prev, payload.new];
-          });
-        }
+    fetch(`/registry/${registryId}/config.json`)
+      .then(r => {
+        if (!r.ok) throw new Error('not found');
+        return r.json();
       })
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'rooms',
-        filter: `id=eq.${room.id}`
-      }, (payload) => {
-        setRoom(payload.new);
-      })
-      .subscribe();
+      .then(setConfig)
+      .catch(() => setConfigError(true));
+  }, [registryId]);
 
-    return () => { supabase.removeChannel(channel); };
-  }, [room.id]);
+  const openRegistry = async () => {
+    setActiveModal('registry');
+    setRegistryLoading(true);
+    const { data } = await supabase
+      .from('rooms')
+      .select('id, name, github_username, registry_id, status')
+      .neq('status', 'expired')
+      .not('registry_id', 'is', null)
+      .order('reserved_at', { ascending: true });
+    setRegistryEntries(data || []);
+    setRegistryLoading(false);
+  };
 
-  const addObject = async (e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).id !== 'room-floor') return;
-
-    const newObj = { 
-      type: selectedType, 
-      x: e.clientX - 25, 
-      y: e.clientY - 25, 
-      room_id: room.id 
-    };
-
-    // 1. Optimistic Update: Show it immediately locally so it doesn't "disappear"
-    const tempId = Math.random().toString();
-    setObjects(prev => [...prev, { ...newObj, id: tempId }]);
-
-    // 2. Save to Database
-    const { error } = await supabase.from('room_objects').insert([newObj]);
-    
-    if (error) {
-      console.error("Placement error:", error);
-      // Remove the fake item if the save failed
-      setObjects(prev => prev.filter(obj => obj.id !== tempId));
+  const handleHotspot = (hotspot: Hotspot) => {
+    if (hotspot.action === 'navigate_floor') {
+      onBack();
+    } else if (hotspot.action === 'open_url' && hotspot.url) {
+      window.open(hotspot.url, '_blank', 'noopener,noreferrer');
+    } else if (hotspot.action === 'open_image' && hotspot.image_url) {
+      setActiveImage({ url: hotspot.image_url, label: hotspot.label });
+    } else if (hotspot.action === 'open_modal') {
+      if (hotspot.modal === 'registry') {
+        openRegistry();
+      } else if (hotspot.modal === 'diagram') {
+        setActiveModal('diagram');
+      } else {
+        setActiveModal(hotspot.modal || null);
+      }
     }
   };
 
-  // --- RENAME FUNCTION ---
-  const renameRoom = async () => {
-    const newName = prompt("Enter new room name:", room.name);
-    if (!newName || newName.trim() === "" || newName === room.name) return;
-
-    const { data } = await supabase.from('rooms').update({ name: newName.trim() }).eq('id', room.id).select();
-    if (data && data.length > 0) setRoom(data[0]);
-  };
-
-  return (
-    <main id="room-floor" className="h-screen w-screen bg-slate-50 relative overflow-hidden cursor-crosshair" onClick={addObject}>
-      {/* UI Overlay */}
-      <div className="absolute top-6 left-6 z-10 p-6 bg-white/80 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200 pointer-events-none">
-        <button onClick={onBack} className="text-indigo-600 font-bold hover:underline pointer-events-auto">← Exit to Neighborhood</button>
-        
-        <div className="flex items-center gap-3 mt-2 pointer-events-auto">
-          <h1 className="text-4xl font-black tracking-tight">{room.name}</h1>
-          <button onClick={renameRoom} className="p-2 hover:bg-slate-200 rounded-full transition-colors">✏️</button>
-        </div>
-        
-        <p className="text-slate-500 font-medium text-sm">Built by {room.owner_name}</p>
-        
-        <div className="mt-6 flex gap-3 pointer-events-auto">
-          {['📦', '🌲', '🛋️', '🐈', '✨', '🏮'].map(item => (
-            <button 
-              key={item} 
-              onClick={() => setSelectedType(item)} 
-              className={`w-14 h-14 text-2xl rounded-xl border-2 transition-all ${
-                selectedType === item ? 'border-indigo-500 bg-indigo-50 scale-110 shadow-md' : 'bg-white border-slate-100 hover:border-slate-300'
-              }`}
-            >
-              {item}
-            </button>
-          ))}
+  if (configError || (!config && !configError && room?.status === 'reserved')) {
+    return (
+      <div className="min-h-screen w-screen bg-stone-100 flex flex-col items-center justify-center p-6">
+        <button onClick={onBack} className="text-slate-400 text-sm font-bold hover:text-slate-900 transition-colors mb-8">← Floor Plan</button>
+        <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-sm border border-slate-200 text-center">
+          <p className="text-2xl mb-3">🚧</p>
+          <h2 className="text-slate-900 text-xl font-black tracking-tight mb-1">{room?.name || registryId}</h2>
+          <p className="text-slate-400 text-sm mb-6">This room is under construction.</p>
+          {room && (
+            <div className="space-y-2 text-left">
+              <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                <span className="text-xs font-black uppercase tracking-widest text-slate-400">GitHub</span>
+                <span className="text-sm font-mono text-slate-700">@{room.github_username}</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-indigo-50 rounded-xl border border-indigo-100">
+                <span className="text-xs font-black uppercase tracking-widest text-indigo-400">Room ID</span>
+                <code className="text-sm font-mono font-bold text-indigo-700">{room.registry_id}</code>
+              </div>
+            </div>
+          )}
         </div>
       </div>
+    );
+  }
 
-      {/* Render Objects */}
-      {objects.map(obj => (
-        <div key={obj.id} className="absolute text-5xl select-none pointer-events-none" style={{ left: obj.x, top: obj.y }}>
-          {obj.type}
+  if (!config) {
+    return (
+      <div className="min-h-screen w-screen bg-stone-100 flex flex-col items-center justify-center gap-4">
+        <button onClick={onBack} className="text-slate-400 text-sm font-bold hover:text-slate-900 transition-colors">← Floor Plan</button>
+        <div className="text-slate-400 text-sm">Loading room...</div>
+      </div>
+    );
+  }
+
+  return (
+    <main className="min-h-screen w-screen overflow-y-auto overflow-x-hidden bg-stone-100">
+      <div className="relative w-full">
+        <img
+          src={config.background_image}
+          alt={config.room_display_name}
+          className="w-full h-auto block"
+          draggable={false}
+        />
+
+        {/* Render images directly on the wall */}
+        {config.hotspots.filter(h => h.action === 'open_image' && h.image_url).map(hotspot => (
+          <div
+            key={`img-${hotspot.id}`}
+            className="absolute pointer-events-none"
+            style={{
+              left: `${hotspot.x}%`,
+              top: `${hotspot.y}%`,
+              width: `${hotspot.width}%`,
+              height: `${hotspot.height}%`,
+            }}
+          >
+            <img
+              src={hotspot.image_url}
+              alt={hotspot.label}
+              className="w-full h-full object-cover rounded shadow-md"
+              draggable={false}
+            />
+          </div>
+        ))}
+
+        {/* Hotspot click zones */}
+        {config.hotspots.map(hotspot => (
+          <button
+            key={hotspot.id}
+            onClick={() => handleHotspot(hotspot)}
+            className="absolute rounded-lg"
+            style={{
+              left: `${hotspot.x}%`,
+              top: `${hotspot.y}%`,
+              width: `${hotspot.width}%`,
+              height: `${hotspot.height}%`,
+              background: 'transparent',
+              cursor: 'pointer',
+            }}
+            aria-label={hotspot.label}
+          />
+        ))}
+
+        {/* Room info icon — bottom right */}
+        {room && (
+          <div className="absolute bottom-4 right-4">
+            <button
+              onClick={() => setShowRoomInfo(v => !v)}
+              className="w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full shadow-md border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors text-sm font-black"
+              aria-label="Room info"
+            >
+              i
+            </button>
+            {showRoomInfo && (
+              <div className="absolute bottom-10 right-0 bg-white rounded-2xl shadow-xl border border-slate-200 p-4 w-56" onClick={e => e.stopPropagation()}>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-3">Room Info</p>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-slate-400">GitHub</span>
+                    <span className="text-xs font-mono text-slate-700">@{room.github_username}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-slate-400">Room ID</span>
+                    <code className="text-xs font-mono font-bold text-indigo-600">{room.registry_id}</code>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+
+        {/* Room title */}
+        {config.title && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none">
+            <h1 className="text-white text-lg font-black tracking-tight drop-shadow-lg whitespace-nowrap px-4 py-1.5 bg-black/30 backdrop-blur-sm rounded-full">
+              {config.title}
+            </h1>
+          </div>
+        )}
+
+        {/* Default back button — hidden if room has a custom door hotspot */}
+        {!config.hide_back_button && (
+          <button
+            onClick={onBack}
+            className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm text-slate-900 text-xs font-black px-4 py-2 rounded-full shadow-md hover:bg-slate-900 hover:text-white transition-all border border-slate-200"
+          >
+            ← Floor Plan
+          </button>
+        )}
+
+        {/* Persistent link buttons */}
+        {config.links && config.links.length > 0 && (
+          <div className="absolute top-4 right-4 flex flex-col gap-2">
+            {config.links.map((link, i) => (
+              <a
+                key={i}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-white/90 backdrop-blur-sm text-slate-900 text-xs font-black px-4 py-2 rounded-full shadow-md hover:bg-indigo-600 hover:text-white transition-all border border-slate-200"
+              >
+                {link.label} →
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Full-size image modal */}
+      {activeImage && (
+        <div
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6"
+          onClick={() => setActiveImage(null)}
+        >
+          <div className="relative max-w-2xl w-full" onClick={e => e.stopPropagation()}>
+            <img
+              src={activeImage.url}
+              alt={activeImage.label}
+              className="w-full h-auto rounded-2xl shadow-2xl"
+            />
+            <p className="text-white/70 text-xs text-center mt-3">{activeImage.label}</p>
+          </div>
         </div>
-      ))}
+      )}
+
+      {/* Welcome Guide Modal */}
+      {activeModal === 'welcome_guide' && (
+        <div
+          className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-6"
+          onClick={() => setActiveModal(null)}
+        >
+          <div
+            className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl"
+            onClick={e => e.stopPropagation()}
+          >
+            <h2 className="text-slate-900 text-2xl font-black tracking-tight mb-1">Welcome to Open Room</h2>
+            <p className="text-slate-500 text-sm mb-6 leading-relaxed">
+              An infinite building constructed one room at a time by real people, with help from AI.
+            </p>
+
+            <div className="space-y-5 mb-8">
+              <div>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-1.5">How to explore</p>
+                <ul className="space-y-1 text-sm text-slate-700">
+                  <li>→ Enter any room on the floor plan</li>
+                  <li>→ Click the door to return to the floor plan</li>
+                </ul>
+              </div>
+              <div>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-1.5">How to contribute a room</p>
+                <ol className="space-y-1 text-sm text-slate-700 list-none">
+                  <li>1. Click <strong>+ Add Room</strong> on the floor plan to reserve your spot and get a room ID</li>
+                  <li>2. Fork the repo on GitHub</li>
+                  <li>3. Copy <code className="bg-slate-100 px-1 rounded text-xs">public/registry/_template/</code> to <code className="bg-slate-100 px-1 rounded text-xs">public/registry/your-room-id/</code></li>
+                  <li>4. Add a background image and edit <code className="bg-slate-100 px-1 rounded text-xs">config.json</code></li>
+                  <li>5. Open a Pull Request — once merged, your room goes live</li>
+                </ol>
+              </div>
+              <div>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-1.5">Building codes</p>
+                <ul className="space-y-1 text-sm text-slate-700">
+                  <li>• Images: WebP, max 200KB</li>
+                  <li>• Total room folder: max 5MB</li>
+                  <li>• One room per builder</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6">
+              <p className="text-[10px] uppercase font-black text-slate-400 mb-1 tracking-widest">Contribute on GitHub</p>
+              <a
+                href="https://github.com/alyssafuward/open-room-open-source"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-mono text-indigo-500 hover:text-indigo-700 break-all underline underline-offset-4"
+              >
+                github.com/alyssafuward/open-room-open-source
+              </a>
+            </div>
+
+            <button
+              onClick={() => setActiveModal(null)}
+              className="w-full py-3.5 bg-slate-900 text-white rounded-xl font-black text-sm uppercase tracking-widest hover:bg-indigo-600 transition-colors"
+            >
+              Back to Room
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Diagram Modal */}
+      {activeModal === 'diagram' && (
+        <DiagramModal onClose={() => setActiveModal(null)} />
+      )}
+
+      {/* Registry Modal */}
+      {activeModal === 'registry' && (
+        <div
+          className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 overflow-y-auto p-6"
+          onClick={() => setActiveModal(null)}
+        >
+          <div
+            className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl mx-auto my-6"
+            onClick={e => e.stopPropagation()}
+          >
+            <h2 className="text-slate-900 text-2xl font-black tracking-tight mb-1">Room Registry</h2>
+            <p className="text-slate-500 text-sm mb-6 leading-relaxed">
+              Reserved rooms and their IDs. If you've reserved a room, find your room ID here.
+            </p>
+
+            {registryLoading ? (
+              <div className="text-center py-8 text-slate-400 text-sm">Loading registry…</div>
+            ) : registryEntries.length === 0 ? (
+              <div className="text-center py-8 text-slate-400 text-sm">No rooms reserved yet.</div>
+            ) : (
+              <div className="space-y-2 mb-6">
+                {registryEntries.map(entry => (
+                  <div key={entry.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                    <div>
+                      <p className="text-sm font-bold text-slate-900">{entry.name}</p>
+                      <p className="text-xs text-slate-400">@{entry.github_username}</p>
+                    </div>
+                    <code className="text-xs font-mono text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg">{entry.registry_id}</code>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <button
+              onClick={() => setActiveModal(null)}
+              className="w-full py-3.5 bg-slate-900 text-white rounded-xl font-black text-sm uppercase tracking-widest hover:bg-indigo-600 transition-colors"
+            >
+              Back to Room
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

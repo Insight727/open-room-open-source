@@ -1,0 +1,47 @@
+{
+  "room_display_name": "Welcome Room",
+  "owner": "Building Admin",
+  "background_image": "/registry/room-001/background.jpeg",
+  "hide_back_button": true,
+  "hotspots": [
+    {
+      "id": "welcome-book",
+      "label": "Welcome Book",
+      "x": 7,
+      "y": 68,
+      "width": 12,
+      "height": 15,
+      "action": "open_modal",
+      "modal": "welcome_guide"
+    },
+    {
+      "id": "plant",
+      "label": "How does this work?",
+      "x": 68,
+      "y": 58,
+      "width": 10,
+      "height": 30,
+      "action": "open_modal",
+      "modal": "diagram"
+    },
+    {
+      "id": "registry-clipboard",
+      "label": "Registry",
+      "x": 81,
+      "y": 18,
+      "width": 11,
+      "height": 24,
+      "action": "open_modal",
+      "modal": "registry"
+    },
+    {
+      "id": "exit-door",
+      "label": "Exit to Floor Plan",
+      "x": 79,
+      "y": 43,
+      "width": 13,
+      "height": 40,
+      "action": "navigate_floor"
+    }
+  ]
+}
