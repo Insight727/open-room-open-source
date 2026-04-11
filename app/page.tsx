@@ -191,12 +191,12 @@ export default function OpenRoom() {
             <div className="bg-slate-50 p-4 rounded-xl mb-6 border border-slate-200">
               <p className="text-[10px] uppercase font-black text-slate-400 mb-2 tracking-widest">Contribute on GitHub</p>
               <a
-                href="https://github.com/alyssafuward/open-room"
+                href="https://github.com/alyssafuward/open-room-open-source"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-xs font-mono text-indigo-500 hover:text-indigo-700 break-all underline underline-offset-4"
               >
-                github.com/alyssafuward/open-room
+                github.com/alyssafuward/open-room-open-source
               </a>
             </div>
 
@@ -249,7 +249,7 @@ export default function OpenRoom() {
 
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6 text-sm text-slate-600 leading-relaxed space-y-2">
               <p className="font-black text-slate-900 text-xs uppercase tracking-widest mb-3">Next steps</p>
-              <p>1. Fork <code className="bg-slate-100 px-1 rounded text-xs">github.com/alyssafuward/open-room</code></p>
+              <p>1. Fork <code className="bg-slate-100 px-1 rounded text-xs">github.com/alyssafuward/open-room-open-source</code></p>
               <p>2. Copy <code className="bg-slate-100 px-1 rounded text-xs">registry/_template/</code> → <code className="bg-slate-100 px-1 rounded text-xs">registry/{successRoom.roomId}/</code></p>
               <p>3. Add your background image and edit <code className="bg-slate-100 px-1 rounded text-xs">config.json</code></p>
               <p>4. Open a Pull Request</p>

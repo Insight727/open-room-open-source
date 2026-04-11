@@ -20,7 +20,7 @@ const NODES: Node[] = [
   { id: 'reserve',          type: 'builder', label: 'Click + Add Room',          detail: 'An empty adjacent cell is clicked. Opens the reservation form.' },
   { id: 'form',             type: 'builder', label: 'Fill Reservation Form',     detail: 'Builder enters their room name, GitHub username, and email. A friendly room ID (e.g. warm-harbor) is generated.' },
   { id: 'room-id',          type: 'builder', label: 'Get Room ID',               detail: 'Room ID is shown in the success modal. Builder must save it — this becomes their registry folder name.' },
-  { id: 'fork',             type: 'builder', label: 'Fork the Repo',             detail: 'Builder forks github.com/alyssafuward/open-room to their own GitHub account.' },
+  { id: 'fork',             type: 'builder', label: 'Fork the Repo',             detail: 'Builder forks github.com/alyssafuward/open-room-open-source to their own GitHub account.' },
   { id: 'template',         type: 'builder', label: 'Copy _template/',           detail: 'Copies public/registry/_template/ to public/registry/warm-harbor/. This is the starting point.' },
   { id: 'build',            type: 'builder', label: 'Build the Room',            detail: 'Builder adds a background image and edits config.json to define hotspots. They can preview locally.' },
   { id: 'pr',               type: 'builder', label: 'Open a Pull Request',       detail: 'Builder opens a PR from their fork to the main repo. Includes a screenshot of their room.' },

@@ -30,6 +30,7 @@ interface RoomConfig {
   hotspots: Hotspot[];
   links?: RoomLink[];
   hide_back_button?: boolean;
+  title?: string;
 }
 
 interface RegistryEntry {
@@ -165,15 +166,13 @@ export default function RoomView({ onBack, registryId, room }: {
           <button
             key={hotspot.id}
             onClick={() => handleHotspot(hotspot)}
-            onMouseEnter={() => setHoveredHotspot(hotspot.id)}
-            onMouseLeave={() => setHoveredHotspot(null)}
-            className="absolute rounded-lg transition-all duration-150"
+            className="absolute rounded-lg"
             style={{
               left: `${hotspot.x}%`,
               top: `${hotspot.y}%`,
               width: `${hotspot.width}%`,
               height: `${hotspot.height}%`,
-              background: hoveredHotspot === hotspot.id ? 'rgba(0,0,0,0.20)' : 'transparent',
+              background: 'transparent',
               cursor: 'pointer',
             }}
             aria-label={hotspot.label}
@@ -208,10 +207,13 @@ export default function RoomView({ onBack, registryId, room }: {
           </div>
         )}
 
-        {/* Tooltip */}
-        {hoveredHotspot && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 text-white text-xs font-medium px-3 py-1.5 rounded-full pointer-events-none backdrop-blur-sm whitespace-nowrap">
-            {config.hotspots.find(h => h.id === hoveredHotspot)?.label}
+
+        {/* Room title */}
+        {config.title && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 pointer-events-none">
+            <h1 className="text-white text-lg font-black tracking-tight drop-shadow-lg whitespace-nowrap px-4 py-1.5 bg-black/30 backdrop-blur-sm rounded-full">
+              {config.title}
+            </h1>
           </div>
         )}
 
@@ -306,12 +308,12 @@ export default function RoomView({ onBack, registryId, room }: {
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6">
               <p className="text-[10px] uppercase font-black text-slate-400 mb-1 tracking-widest">Contribute on GitHub</p>
               <a
-                href="https://github.com/alyssafuward/open-room"
+                href="https://github.com/alyssafuward/open-room-open-source"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-xs font-mono text-indigo-500 hover:text-indigo-700 break-all underline underline-offset-4"
               >
-                github.com/alyssafuward/open-room
+                github.com/alyssafuward/open-room-open-source
               </a>
             </div>
 

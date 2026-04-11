@@ -19,7 +19,7 @@ When a Builder starts a session, ask: **"Do you already have your room ID?"**
 
 ## The setup flow (handle all of this yourself)
 
-1. **Fork** — confirm they've forked `github.com/alyssafuward/open-room` to their GitHub account
+1. **Fork** — confirm they've forked `github.com/alyssafuward/open-room-open-source` to their GitHub account
 2. **Clone** — clone their fork locally
 3. **Copy the template** — `cp -r public/registry/_template/ public/registry/their-room-id/`
 4. **Background image** — help them choose or generate one. Landscape images work best. Remind them: JPEG or WebP, max 200KB
