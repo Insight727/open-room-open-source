@@ -4,7 +4,7 @@ Open Room is a community building where each room is a real contribution from a 
 
 ## How to contribute a room
 
-1. **Reserve your spot** — visit the live site, click **+ Add Room** on the floor plan, and fill out the form. You'll get a room ID (e.g. `warm-harbor`).
+1. **Reserve your spot** — visit [open-room-open-source.vercel.app](https://open-room-open-source.vercel.app), click **+ Add Room** on the floor plan, and fill out the form. You'll get a room ID (e.g. `warm-harbor`).
 2. **Fork this repo** on GitHub.
 3. **Copy the template** *[AI-assisted]* — duplicate `public/registry/_template/` and rename it to `public/registry/your-room-id/`.
 4. **Build your room** *[AI-assisted]* — add a background image and edit `config.json` to define your hotspots. See the [template README](public/registry/_template/README.md) for the full schema.

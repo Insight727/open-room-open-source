@@ -2,6 +2,8 @@
 
 Open Room is a community-built building — an infinite floor plan where every room is designed and contributed by a real person, with help from AI.
 
+**[open-room-open-source.vercel.app](https://open-room-open-source.vercel.app)**
+
 ## How it works
 
 Rooms on the floor plan are real contributions. Each room is a folder in this repo containing a background image and a `config.json` that defines what's inside — clickable hotspots, links, artwork, anything. When a PR is merged, the room goes live.
