@@ -329,12 +329,20 @@ export default function RoomView({ onBack, registryId, room }: {
               <div>
                 <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-1.5">How to contribute a room</p>
                 <ol className="space-y-1 text-sm text-slate-700 list-none">
-                  <li>1. Click <strong>+ Add Room</strong> on the floor plan to reserve your spot and get a room ID</li>
+                  <li>1. Click <strong>+ Add Room</strong> on the floor plan to reserve your spot — a GitHub issue is opened automatically with your room ID</li>
                   <li>2. Fork the repo on GitHub</li>
-                  <li>3. Copy <code className="bg-slate-100 px-1 rounded text-xs">public/registry/_template/</code> to <code className="bg-slate-100 px-1 rounded text-xs">public/registry/your-room-id/</code></li>
-                  <li>4. Add a background image and edit <code className="bg-slate-100 px-1 rounded text-xs">config.json</code></li>
-                  <li>5. Open a Pull Request — once merged, your room goes live</li>
+                  <li>3. Use the Claude skill to build your room — it'll walk you through everything from your room ID</li>
+                  <li>4. Open a Pull Request — a Vercel preview is generated so you can check it looks right</li>
+                  <li>5. Once approved and merged, your room goes live</li>
                 </ol>
+              </div>
+              <div>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-1.5">Edit an existing room</p>
+                <ul className="space-y-1 text-sm text-slate-700">
+                  <li>→ Click the <strong>i</strong> button in any room, then <strong>Open a Task</strong></li>
+                  <li>→ Describe your change — a GitHub issue is created automatically</li>
+                  <li>→ Fork the repo, make your edits, and open a PR</li>
+                </ul>
               </div>
               <div>
                 <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-1.5">Building codes</p>
