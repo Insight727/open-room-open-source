@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@supabase/supabase-js';
 import DiagramModal from './DiagramModal';
 
@@ -12,10 +13,11 @@ interface Hotspot {
   y: number;
   width: number;
   height: number;
-  action: 'open_modal' | 'open_image' | 'open_url' | 'navigate_floor';
+  action: 'open_modal' | 'open_image' | 'open_url' | 'navigate_floor' | 'navigate_room';
   modal?: string;
   image_url?: string;
   url?: string;
+  room_id?: string;
 }
 
 interface RoomLink {
@@ -30,6 +32,8 @@ interface RoomConfig {
   hotspots: Hotspot[];
   links?: RoomLink[];
   hide_back_button?: boolean;
+  back_room_id?: string;
+  back_label?: string;
   title?: string;
 }
 
@@ -46,6 +50,7 @@ export default function RoomView({ onBack, registryId, room }: {
   registryId: string;
   room?: any;
 }) {
+  const router = useRouter();
   const [config, setConfig] = useState<RoomConfig | null>(null);
   const [configError, setConfigError] = useState(false);
   const [activeModal, setActiveModal] = useState<string | null>(null);
@@ -103,6 +108,8 @@ export default function RoomView({ onBack, registryId, room }: {
   const handleHotspot = (hotspot: Hotspot) => {
     if (hotspot.action === 'navigate_floor') {
       onBack();
+    } else if (hotspot.action === 'navigate_room' && hotspot.room_id) {
+      router.push(`/?room=${encodeURIComponent(hotspot.room_id)}`);
     } else if (hotspot.action === 'open_url' && hotspot.url) {
       window.open(hotspot.url, '_blank', 'noopener,noreferrer');
     } else if (hotspot.action === 'open_image' && hotspot.image_url) {
@@ -261,10 +268,13 @@ export default function RoomView({ onBack, registryId, room }: {
         {/* Default back button — hidden if room has a custom door hotspot */}
         {!config.hide_back_button && (
           <button
-            onClick={onBack}
+            onClick={() => config.back_room_id
+              ? router.push(`/?room=${encodeURIComponent(config.back_room_id)}`)
+              : onBack()
+            }
             className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm text-slate-900 text-xs font-black px-4 py-2 rounded-full shadow-md hover:bg-slate-900 hover:text-white transition-all border border-slate-200"
           >
-            ← Floor Plan
+            ← {config.back_label ?? (config.back_room_id ? 'Back' : 'Floor Plan')}
           </button>
         )}
 

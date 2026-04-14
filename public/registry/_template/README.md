@@ -17,6 +17,8 @@
 | `owner` | Your GitHub username |
 | `background_image` | Path to your image — replace `your-room-id` with your actual ID |
 | `hide_back_button` | Set to `true` if you have a custom door hotspot and want to hide the default back button |
+| `back_room_id` | Optional room ID to navigate to when the back button is clicked, instead of the floor plan |
+| `back_label` | Optional label for the back button (defaults to `Back` when `back_room_id` is set, `Floor Plan` otherwise) |
 | `links` | Optional array of persistent link buttons shown in the top-right corner |
 | `hotspots` | Array of clickable zones |
 
@@ -63,6 +65,11 @@
 **`open_modal`** — opens a built-in modal. Available modals: `welcome_guide`, `registry`, `diagram`.
 ```json
 { "action": "open_modal", "modal": "welcome_guide" }
+```
+
+**`navigate_room`** — navigates to another room in the building (same tab).
+```json
+{ "action": "navigate_room", "room_id": "soft-grove" }
 ```
 
 ---
